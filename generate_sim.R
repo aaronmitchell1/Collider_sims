@@ -24,7 +24,7 @@ P <- rbinom(n, 1, progression.probs)
 
 ##This seems to work - it gives you a matrix with a seperate beta for 90 SNPs, but not sure if it is right as I cannot get it to work for progression.
 
-incidence.GWAS  <- matrix(0, length(incidence.GWAS), 2)
+incidence.GWAS  <- matrix(0, length(incidence.SNPs), 2)
 
 for (i in seq_along(incidence.SNPs)) {
     GWASincidence <- glm(I ~ G, subset=grepl(incidence.SNPs, G), family = binomial(link = "logit"))
