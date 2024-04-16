@@ -27,4 +27,4 @@ P <- rbinom(n, 1, progression.probs)
 incidence_GWAS <- matrix(0, length(incidence.SNPs))
 
 for (j in incidence.SNPs) { model <- glm(I ~ G[,j], family = binomial) 
-+ incidence_results[j] <- summary(model)$coefficients[2] }
+incidence_GWAS[j] <- summary(model)$coefficients[2] }
