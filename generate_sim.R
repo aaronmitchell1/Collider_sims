@@ -22,9 +22,16 @@ progression.betas[progression.SNPs] <- rnorm(length(progression.SNPs), 0, 0.2)
 progression.probs <- expit(-1 + as.vector(G %*% progression.betas) + 1 * U)
 P <- rbinom(n, 1, progression.probs)
 
-##This seems to work - it gives you a matrix with a seperate beta for 90 SNPs, but not sure if it is right as I cannot get it to work for progression.
+##GWAS of incidence.
 
 incidence_GWAS <- matrix(0, length(incidence.SNPs))
 
 for (j in incidence.SNPs) { model <- glm(I ~ G[,j], family = binomial) 
 incidence_GWAS[j] <- summary(model)$coefficients[2] }
+
+##GWAS of progression.
+
+progression_GWAS <- matrix(0, length(progression.SNPs))
+
+for (j in progression.SNPs) { model <- glm(P ~ G[,j], family = binomial) 
+progression_GWAS[j] <- summary(model)$coefficients[2] }
