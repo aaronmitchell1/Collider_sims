@@ -25,8 +25,7 @@ P <- rbinom(n, 1, progression.probs)
 ##Simulate GWAS of incidence.
 #Include effects of progression SNPs on incidence and vice versa to conduct subsequent analyses.
 
-
-incidence_GWAS <- matrix(0, length(incidence.SNPs), 3); colnames(incidence_GWAS) <- c("Estimate", "StdErr", "Pval")
+incidence_GWAS <- matrix(0, nSNPs, 3); colnames(incidence_GWAS) <- c("Estimate", "StdErr", "Pval")
 
 for (j in incidence.SNPs) {
   incidence_model <- glm(I ~ G[,j], family = binomial)
@@ -44,7 +43,7 @@ for (j in progression.SNPs) {
 
 ##Simulate GWAS of progression.
 
-progression_GWAS <- matrix(0, 100, 3); colnames(progression_GWAS) <- c("Estimate", "StdErr", "Pval")
+progression_GWAS <- matrix(0, nSNPs, 3); colnames(progression_GWAS) <- c("Estimate", "StdErr", "Pval")
 
 for (j in progression.SNPs) {
   progression_model <- glm(P ~ G[,j], family = binomial)
