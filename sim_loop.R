@@ -49,6 +49,6 @@ for (j in incidence.SNPs) {
   progression_GWAS[j, 3] <- summary(progression_model)$coefficients["G[, j]", "Pr(>|z|)"]
 }
 
-results[[i]] <- list(incidence_GWAS = incidence_GWAS, progression_GWAS = progression_GWAS)
+loop_results[[i]] <- list(incidence_GWAS = incidence_GWAS, progression_GWAS = progression_GWAS)
   
 }
