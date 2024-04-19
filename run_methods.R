@@ -1,12 +1,10 @@
 ##Dudbridge method, based on April Hartley's code.
 
-incidence_GWAS <- data.frame(incidence_GWAS)
-progression_GWAS <- data.frame(progression_GWAS)
-ivw <- mr_ivw(incidence_GWAS$Estimate, progression_GWAS$Estimate, 
-                 incidence_GWAS$StdErr, progression_GWAS$StdErr)
-dudbridgeweights <- 1/progression_GWAS$StdErr^2
-weighting <- (sum(dudbridgeweights*incidence_GWAS$Estimate^2))/
-            ((sum(dudbridgeweights*incidence_GWAS$Estimate^2))-(sum(dudbridgeweights*incidence_GWAS$StdErr^2)))
+ivw <- mr_ivw(incidence_GWAS[, 1], progression_GWAS[, 1], 
+                 incidence_GWAS[, 2], progression_GWAS[, 2])
+dudbridgeweights <- 1/progression_GWAS[, 2]^2
+weighting <- (sum(dudbridgeweights*incidence_GWAS[, 1]^2))/
+            ((sum(dudbridgeweights*incidence_GWAS[, 1]^2))-(sum(dudbridgeweights*incidence_GWAS[, 2]^2)))
 cf.db <- ivw$b*weighting
 cf.se.db <- ivw$se*weighting
 
