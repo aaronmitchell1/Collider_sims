@@ -1,7 +1,7 @@
 ##Dudbridge method, based on April Hartley's code.
 
 incidence_GWAS <- data.frame(incidence_GWAS)
-progression_GWAS <- data.frame(progresion_GWAS)
+progression_GWAS <- data.frame(progression_GWAS)
 ivw <- mr_ivw(incidence_GWAS$Estimate, progression_GWAS$Estimate, 
                  incidence_GWAS$StdErr, progression_GWAS$StdErr)
 dudbridgeweights <- 1/progression_GWAS$StdErr^2
