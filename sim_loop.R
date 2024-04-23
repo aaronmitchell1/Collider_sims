@@ -1,4 +1,7 @@
 iter <- 1000
+n <- 1e5
+incidence.SNPs <- 1:90
+progression.SNPs <- 91:100
 
 loop_results <- list()
 loop_methods <- list()
@@ -17,8 +20,10 @@ collider_bias_type <- list(
   MR_RAPS = "MR_RAPS"
 )
 
+G <- matrix(0, n, nSNPs)
+
 for (i in 1:iter) {
-  
+
 ##Simulate common cause (collider).
 U <- rnorm(n, 0, 1)
 
@@ -34,14 +39,10 @@ P <- rbinom(n, 1, progression.probs)
 
 ##Simulate GWAS of incidence.
   
-for (j in incidence.SNPs) {
-  incidence_model <- glm(I ~ G[,j], family = binomial)
-  incidence_GWAS[j, 1] <- summary(incidence_model)$coefficients["G[, j]", "Estimate"]
-  incidence_GWAS[j, 2] <- summary(incidence_model)$coefficients["G[, j]", "Std. Error"]
-  incidence_GWAS[j, 3] <- summary(incidence_model)$coefficients["G[, j]", "Pr(>|z|)"]
-}
+for (j in 1:nSNPs) {
 
-for (j in progression.SNPs) {
+G[, j] <- rbinom(n, 2, maf[j])
+  
   incidence_model <- glm(I ~ G[,j], family = binomial)
   incidence_GWAS[j, 1] <- summary(incidence_model)$coefficients["G[, j]", "Estimate"]
   incidence_GWAS[j, 2] <- summary(incidence_model)$coefficients["G[, j]", "Std. Error"]
@@ -50,14 +51,7 @@ for (j in progression.SNPs) {
 
 ##Simulate GWAS of progression.
   
-for (j in progression.SNPs) {
-  progression_model <- glm(P ~ G[,j], family = binomial)
-  progression_GWAS[j, 1] <- summary(progression_model)$coefficients["G[, j]", "Estimate"]
-  progression_GWAS[j, 2] <- summary(progression_model)$coefficients["G[, j]", "Std. Error"]
-  progression_GWAS[j, 3] <- summary(progression_model)$coefficients["G[, j]", "Pr(>|z|)"]
-}
-
-for (j in incidence.SNPs) {
+for (j in 1:nSNPs) {
   progression_model <- glm(P ~ G[,j], family = binomial)
   progression_GWAS[j, 1] <- summary(progression_model)$coefficients["G[, j]", "Estimate"]
   progression_GWAS[j, 2] <- summary(progression_model)$coefficients["G[, j]", "Std. Error"]
