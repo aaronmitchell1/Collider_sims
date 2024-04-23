@@ -1,36 +1,15 @@
 ##Diagnostics
 
-##R^2 for each SNP from linear regression of G on I/P as suggested by Eleanor Sanderson.
+##R^2 from linear regression of G on I/P as suggested by Eleanor Sanderson, this is a better method than a logistic approach.
+##Not really necessary to have this on a per-SNP basis but if needed easy to implement using subset, as with main sim.
 
-##Incidence
+##How much variation is explained in incidence overall?
 
-incidence_rsq <- matrix(0, nSNPs, 1); colnames(incidence_rsq) <- "Rsq"
-
-for (j in incidence.SNPs) {
-incidence_rsq_model <- lm(I ~ G[,j])
-incidence_rsq[j, 1] <- summary(incidence_rsq_model)$r.squared
-}
-
-for (j in progression.SNPs) {
-incidence_rsq_model <- lm(I ~ G[,j])
-incidence_rsq[j, 1] <- summary(incidence_rsq_model)$r.squared
-}
+incidence_rsq <- summary(lm(I ~ G))$r.squared
 
 ##Progression
 
-progression_rsq <- matrix(0, nSNPs, 1); colnames(progression_rsq) <- "Rsq"
-
-for (j in progression.SNPs) {
-  progression_rsq_model <- lm(P ~ G[,j])
-  progression_rsq[j, 1] <- summary(progression_rsq_model)$r.squared
-}
-
-for (j in incidence.SNPs) {
-  progression_model <- glm(P ~ G[,j], family = binomial)
-  progression_GWAS[j, 1] <- summary(progression_model)$coefficients["G[, j]", "Estimate"]
-  progression_GWAS[j, 2] <- summary(progression_model)$coefficients["G[, j]", "Std. Error"]
-  progression_GWAS[j, 3] <- summary(progression_model)$coefficients["G[, j]", "Pr(>|z|)"]
-}
+progression_rsq <- summary(lm(P ~ G))$r.squared
 
 ##Repetitions (nsims) For loop 
 
