@@ -64,7 +64,13 @@ for (j in 1:nSNPs) {
 }
   
 ##Store results 
-loop_results[[i]] <- list(incidence_GWAS = incidence_GWAS, progression_GWAS = progression_GWAS)
+loop_results[[i]] <- list(incidence_GWAS[j, 1], 
+                     incidence_GWAS[j, 2],
+                     incidence_GWAS[j, 3],
+                     progression_GWAS[j, 1],
+                     progression_GWAS[j, 2],
+                     progression_GWAS[j, 3]
+  )
 
 ##Run the methods
 
