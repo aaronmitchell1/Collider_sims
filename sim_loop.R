@@ -32,6 +32,7 @@ U <- rnorm(n, 0, 1)
 
 ##Simulate one-sample genetic data from individual-level data - number of SNPs, simulate MAF, ratios for how many affect I and P.
 maf <- runif(nSNPs, 0.05, 0.5)
+G[, j] <- rbinom(n, 2, maf[j])
 for (j in 1:nSNPs) G[, j] <- rbinom(n, 2, maf[j])
 incidence.betas <- rep(0, nSNPs)
 incidence.betas[incidence.SNPs] <- rnorm(length(incidence.SNPs), 0, 0.2)
@@ -45,8 +46,6 @@ P <- rbinom(n, 1, progression.probs)
 ##Simulate GWAS of incidence.
   
 for (j in 1:nSNPs) {
-
-G[, j] <- rbinom(n, 2, maf[j])
   
   incidence_model <- glm(I ~ G[,j], family = binomial)
   incidence_GWAS[j, 1] <- summary(incidence_model)$coefficients["G[, j]", "Estimate"]
@@ -64,12 +63,12 @@ for (j in 1:nSNPs) {
 }
   
 ##Store results 
-loop_results[[i]] <- list(incidence_GWAS[j, 1], 
-                     incidence_GWAS[j, 2],
-                     incidence_GWAS[j, 3],
-                     progression_GWAS[j, 1],
-                     progression_GWAS[j, 2],
-                     progression_GWAS[j, 3]
+loop_results[[i]] <- list(incidence_GWAS_b = incidence_GWAS[j, 1], 
+                          incidence_GWAS_se = incidence_GWAS[j, 2],
+                          incidence_GWAS_p = incidence_GWAS[j, 3],
+                          progression_GWAS_b = progression_GWAS[j, 1],
+                          progression_GWAS_se = progression_GWAS[j, 2],
+                          progression_GWAS_p = progression_GWAS[j, 3]
   )
 
 ##Run the methods
