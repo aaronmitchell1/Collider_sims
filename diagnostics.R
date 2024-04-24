@@ -39,6 +39,10 @@ progression_mean[j, 1] (P[,j])
 
   }
 
+##Check correlation between I and P for tuning.
+
+cor(I,P)
+
 ##Monte-Carlo SE
 
 ##Confidence interval coverage
