@@ -4,12 +4,12 @@
 #nind = number of individuals in 'GWAS'
 #incidenceSNPs = how many SNPs associated with incidence, this needs to be inputted as a ratio i.e., 1:90
 #progressionSNPs = how many SNPs associated with progression, this also needs to be inputted as a ratio
-#corr = genetic correlation between incidence and progression SNPs
+#genetic correlation between I and P SNPs can then be induced by setting the ratio of SNPs between incidence and progression
 #minallelef = minor allele frequency in 'GWAS' population , default is to generate MAF between 0.05%-5% from uniform distribution
 #collider = induce collider bias through common cause of I and P, either yes or no so you can get the 'right' answer
 #seed = random seed for data generation to improve reproducibility
 
-generate_sim <- function(nSNPs, nind, incidenceSNPs, progressionSNPs, corr, minallelef = c(0.05, 0.5), collider, seed=54545)
+generate_sim <- function(nSNPs, nind, incidenceSNPs, progressionSNPs, minallelef = c(0.05, 0.5), collider, seed=54545)
 
 ## Auxiliary function to simulate logistic data.
 expit <- function (x) exp(x) / (1 + exp(x))
@@ -68,6 +68,3 @@ for (j in 1:nSNPs) {
 ##Could potentially add a systemtime wrapper for each method as time/performance trade-off could be part of the paper
 #Storing systemtime is simple to implement like so:
 #t1 <- system.time (x)
-
-#Incidence.probs should correlate with progression.probs?
-#At which point is this done; this can be achieved by adjusting the probabilities of the 2nd vector and checking the resultant cor(x,y), is there a better way?
