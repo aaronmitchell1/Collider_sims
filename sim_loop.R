@@ -6,7 +6,9 @@ nSNPs <- 100
 incidence.SNPs <- 1:90
 progression.SNPs <- 91:100
 
-loop_results <- list()
+incidence_GWAS <- array(0, dim=c(iter, nSNPs, 4))
+progression_GWAS <- array(0, dim=c(iter, nSNPs, 4))
+
 loop_methods <- list()
 
 collider_bias_results <- data.frame(
@@ -48,29 +50,24 @@ P <- rbinom(n, 1, progression.probs)
 for (j in 1:nSNPs) {
   
   incidence_model <- glm(I ~ G[,j], family = binomial)
-  incidence_GWAS[j, 1] <- summary(incidence_model)$coefficients["G[, j]", "Estimate"]
-  incidence_GWAS[j, 2] <- summary(incidence_model)$coefficients["G[, j]", "Std. Error"]
-  incidence_GWAS[j, 3] <- summary(incidence_model)$coefficients["G[, j]", "Pr(>|z|)"]
+  incidence_GWAS[i, j, 1] <- summary(incidence_model)$coefficients["G[, j]", "Estimate"]
+  incidence_GWAS[i, j, 2] <- summary(incidence_model)$coefficients["G[, j]", "Std. Error"]
+  incidence_GWAS[i, j, 3] <- summary(incidence_model)$coefficients["G[, j]", "Pr(>|z|)"]
+  incidence_GWAS[i, j, 4] <- coef(incidence_model)[1]
+
 }
 
 ##Simulate GWAS of progression.
   
 for (j in 1:nSNPs) {
   progression_model <- glm(P ~ G[,j], family = binomial)
-  progression_GWAS[j, 1] <- summary(progression_model)$coefficients["G[, j]", "Estimate"]
-  progression_GWAS[j, 2] <- summary(progression_model)$coefficients["G[, j]", "Std. Error"]
-  progression_GWAS[j, 3] <- summary(progression_model)$coefficients["G[, j]", "Pr(>|z|)"]
+  progression_GWAS[i, j, 1] <- summary(progression_model)$coefficients["G[, j]", "Estimate"]
+  progression_GWAS[i, j, 2] <- summary(progression_model)$coefficients["G[, j]", "Std. Error"]
+  progression_GWAS[i, j, 3] <- summary(progression_model)$coefficients["G[, j]", "Pr(>|z|)"]
+  progression_GWAS[i, j, 4] <- coef(progression_model)[1]
+
 }
   
-##Store results 
-loop_results[[i]] <- list(incidence_GWAS_b = incidence_GWAS[j, 1], 
-                          incidence_GWAS_se = incidence_GWAS[j, 2],
-                          incidence_GWAS_p = incidence_GWAS[j, 3],
-                          progression_GWAS_b = progression_GWAS[j, 1],
-                          progression_GWAS_se = progression_GWAS[j, 2],
-                          progression_GWAS_p = progression_GWAS[j, 3]
-  )
-
 ##Run the methods
 
 ##Dudbridge method, based on April Hartley's code.
