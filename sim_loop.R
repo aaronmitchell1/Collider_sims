@@ -1,5 +1,8 @@
+expit <- function (x) exp(x) / (1 + exp(x))
+set.seed(54545)
 iter <- 1000
 n <- 1e5
+nSNPs <- 100
 incidence.SNPs <- 1:90
 progression.SNPs <- 91:100
 
