@@ -7,6 +7,7 @@ incidence.SNPs <- 1:90
 progression.SNPs <- 91:100
 library(MendelianRandomization)
 library(mr.raps)
+library(SlopeHunter)
 
 loop_methods <- vector('list', iter)
 
@@ -17,7 +18,7 @@ G <- matrix(0, n, nSNPs)
 ##Simulate common cause (collider).
 U <- rnorm(n, 0, 1)
 
-##Simulate one-sample genetic data from individual-level data - number of SNPs, simulate MAF, ratios for how many affect I and P.
+##Simulate one-sample genetic data from individual-level data - number of SNPs, generate MAF, ratios for how many affect I and P.
 maf <- runif(nSNPs, 0.05, 0.5)
 for (j in 1:nSNPs) G[, j] <- rbinom(n, 2, maf[j])
 incidence.betas <- rep(0, nSNPs)
@@ -57,7 +58,7 @@ collider_bias_results <- data.frame()
 
 ##Run the methods
 
-##Dudbridge method, based on April Hartley's code.
+##Dudbridge method (updated CWLS from Cai et al. paper), based on April Hartley's code.
 
 ivw <- mr_ivw(incidence_GWAS[, 1], progression_GWAS[, 1], 
                  incidence_GWAS[, 2], progression_GWAS[, 2])
@@ -136,7 +137,7 @@ collider_bias_results <- rbind(collider_bias_results,
                                Correction_SE = Slopehunter_SE
                                  ))
 
-##Summarise results
+##Summarise methods results for each iteration
   
 loop_methods[[i]] <- list(collider_bias_results = collider_bias_results)
   
