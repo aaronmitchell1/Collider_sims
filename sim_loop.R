@@ -10,6 +10,8 @@ library(mr.raps)
 library(SlopeHunter)
 
 loop_methods <- vector('list', iter)
+incidence_GWAS <- array(0, dim = c(iter, nSNPs, 4))
+progression_GWAS <- array(0, dim = c(iter, nSNPs, 4))
 
 for (i in 1:iter) {
 
