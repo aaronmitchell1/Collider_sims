@@ -12,6 +12,11 @@ library(SlopeHunter)
 loop_methods <- vector('list', iter)
 incidence_GWAS <- array(0, dim = c(iter, nSNPs, 3))
 progression_GWAS <- array(0, dim = c(iter, nSNPs, 3))
+incidence_rsq <- matrix(0, iter)
+progression_rsq <- matrix(0, iter)
+correlation_coef <- matrix(0, iter)
+incidence_mean <- matrix(0, iter)
+progression_mean <- matrix(0, iter)
 
 for (i in 1:iter) {
 
@@ -140,5 +145,15 @@ collider_bias_results <- rbind(collider_bias_results,
 ##Summarise methods results for each iteration
   
 loop_methods[[i]] <- list(collider_bias_results = collider_bias_results)
+
+##Diagnostics
+
+incidence_rsq[, i] <- summary(lm(I ~ G))$r.squared
+progression_rsq[, i] <- summary(lm(P ~ G))$r.squared
+correlation_coef[, i] <- cor(I,P)
+incidence_mean[, i] <- mean(I)
+progression_mean[, i] <- mean(P)
   
 }
+
+save(incidence_GWAS, progression_GWAS, loop_methods, incidence_rsq, progression_rsq, correlation_coef, incidence_mean, progression_mean, file = 'sim_results.RData')
