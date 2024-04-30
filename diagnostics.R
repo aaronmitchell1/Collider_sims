@@ -14,6 +14,7 @@ progression_rsq <- summary(lm(P ~ G))$r.squared
 ##Repetitions (nsims) For loop 
 
 ##Means for I and P
+#Don't save intercept, just ensure that prevalence of I is realistic. Doesn't matter what the intercept is and doesn't need to be on per-SNP basis.
 
 incidence_mean <- matrix(0, nSNPs, 1); colnames(incidence_mean) <- "Mean"
 
