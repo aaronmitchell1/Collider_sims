@@ -41,7 +41,6 @@ for (j in 1:nSNPs) {
   incidence_GWAS[i, j, 1] <- summary(incidence_model)$coefficients["G[, j]", "Estimate"]
   incidence_GWAS[i, j, 2] <- summary(incidence_model)$coefficients["G[, j]", "Std. Error"]
   incidence_GWAS[i, j, 3] <- summary(incidence_model)$coefficients["G[, j]", "Pr(>|z|)"]
-  incidence_GWAS[i, j, 4] <- coef(incidence_model)[1]
 
 }
 
@@ -52,7 +51,6 @@ for (j in 1:nSNPs) {
   progression_GWAS[i, j, 1] <- summary(progression_model)$coefficients["G[, j]", "Estimate"]
   progression_GWAS[i, j, 2] <- summary(progression_model)$coefficients["G[, j]", "Std. Error"]
   progression_GWAS[i, j, 3] <- summary(progression_model)$coefficients["G[, j]", "Pr(>|z|)"]
-  progression_GWAS[i, j, 4] <- coef(progression_model)[1]
 
 }
 
