@@ -86,6 +86,9 @@ progression.betas <- rep(0, nSNPs)
 progression.betas[progression.SNPs] <- rnorm(length(progression.SNPs), 0, 0.2)
 progression.probs <- expit(-1 + as.vector(G %*% progression.betas) + 1 * U)
 P <- rbinom(n, 1, progression.probs)
+  
+##Overwrite P as we generated it for all 'individuals' but obviously don't want it for those who don't have the disease!
+P[I == 0] <- NA
 
 ##Simulate GWAS of incidence.
   
