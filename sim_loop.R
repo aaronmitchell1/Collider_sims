@@ -66,6 +66,7 @@ progression_rsq <- matrix(0, iter)
 correlation_coef <- matrix(0, iter)
 incidence_mean <- matrix(0, iter)
 progression_mean <- matrix(0, iter)
+ci_coverage <- matrix(0, iter)
 
 for (i in 1:iter) {
 
@@ -118,7 +119,7 @@ collider_bias_results <- data.frame()
 ##Dudbridge method (updated CWLS from Cai et al. paper), based on April Hartley's code.
 
 ivw <- mr_ivw(incidence_GWAS[, 1], progression_GWAS[, 1], 
-                 incidence_GWAS[, 2], progression_GWAS[, 2])
+              incidence_GWAS[, 2], progression_GWAS[, 2])
 dudbridgeweights <- 1/progression_GWAS[, 2]^2
 weighting <- (sum(dudbridgeweights*incidence_GWAS[, 1]^2))/
             ((sum(dudbridgeweights*incidence_GWAS[, 1]^2))-(sum(dudbridgeweights*incidence_GWAS[, 2]^2)))
@@ -128,8 +129,10 @@ cf.se.db <- ivw$se*weighting
 collider_bias_results <- rbind(collider_bias_results,
                                data.frame(Method = 'Dudbridge',
                                Correction_Beta = cf.db,
-                               Correction_SE = cf.se.db
-                                 ))
+                               Correction_SE = cf.se.db,
+                               Correction_Beta_SD <- sd(cf.db),
+                               MCSE <- Correction_Beta_SD / sqrt(iter) 
+                               ))
   
 ##Weighted median
 
@@ -142,7 +145,9 @@ Weighted_Median_SE <- Weighted_Median_Res$StdError
 collider_bias_results <- rbind(collider_bias_results,
                                  data.frame(Method = 'Weighted_median',
                                  Correction_Beta = Weighted_Median_Beta,
-                                 Correction_SE = Weighted_Median_SE
+                                 Correction_SE = Weighted_Median_SE,
+                                 Correction_Beta_SD <- sd(Weighted_Median_Beta),
+                                 MCSE <- Correction_Beta_SD / sqrt(iter) 
                                  ))
   
 ##MR-RAPS
@@ -156,7 +161,9 @@ MR_RAPS_SE <- MR_RAPS_Res$beta.se
 collider_bias_results <- rbind(collider_bias_results,
                                  data.frame(Method = 'MR_RAPS',
                                  Correction_Beta = MR_RAPS_Beta,
-                                 Correction_SE = MR_RAPS_SE
+                                 Correction_SE = MR_RAPS_SE,
+                                 Correction_Beta_SD <- sd(MR_RAPS_Beta),
+                                 MCSE <- Correction_Beta_SD / sqrt(iter)               
                                  ))
 
 ##MR-Horse
@@ -173,8 +180,10 @@ MR_Horse_SE <- MR_Horse_Res$MR_Estimate$SD
 collider_bias_results <- rbind(collider_bias_results,
                                data.frame(Method = 'MR_Horse',
                                Correction_Beta = MR_Horse_Beta,
-                               Correction_SE = MR_Horse_SE
-                                 )) 
+                               Correction_SE = MR_Horse_SE,
+                               Correction_Beta_SD <- sd(MR_Horse_Beta),
+                               MCSE <- Correction_Beta_SD / sqrt(iter)
+                               )) 
   
 ##Slope-Hunter
 ##Reformat data and run the SlopeHunter method.
@@ -191,8 +200,10 @@ Slopehunter_SE <- SlopeHunter_Res$bse
 collider_bias_results <- rbind(collider_bias_results,
                                data.frame(Method = 'Slopehunter',
                                Correction_Beta = Slopehunter_Beta,
-                               Correction_SE = Slopehunter_SE
-                                 ))
+                               Correction_SE = Slopehunter_SE,
+                               Correction_Beta_SD <- sd(Slopehunter_Beta),
+                               MCSE <- Correction_Beta_SD / sqrt(iter)
+                               ))
 
 ##Summarise methods results for each iteration
   
