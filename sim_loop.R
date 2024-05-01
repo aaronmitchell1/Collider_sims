@@ -92,13 +92,16 @@ P <- rbinom(n, 1, progression.probs)
 P[I == 0] <- NA
 
 ##Simulate GWAS of incidence.
+
+incidence_GWAS <- data.frame()
+progression_GWAS <- data.frame()
   
 for (j in 1:nSNPs) {
   
   incidence_model <- glm(I ~ G[,j], family = binomial)
-  incidence_GWAS[i, j, 1] <- summary(incidence_model)$coefficients["G[, j]", "Estimate"]
-  incidence_GWAS[i, j, 2] <- summary(incidence_model)$coefficients["G[, j]", "Std. Error"]
-  incidence_GWAS[i, j, 3] <- summary(incidence_model)$coefficients["G[, j]", "Pr(>|z|)"]
+  incidence_GWAS[j, 1] <- summary(incidence_model)$coefficients["G[, j]", "Estimate"]
+  incidence_GWAS[j, 2] <- summary(incidence_model)$coefficients["G[, j]", "Std. Error"]
+  incidence_GWAS[j, 3] <- summary(incidence_model)$coefficients["G[, j]", "Pr(>|z|)"]
 
 }
 
@@ -106,9 +109,9 @@ for (j in 1:nSNPs) {
   
 for (j in 1:nSNPs) {
   progression_model <- glm(P ~ G[,j], family = binomial)
-  progression_GWAS[i, j, 1] <- summary(progression_model)$coefficients["G[, j]", "Estimate"]
-  progression_GWAS[i, j, 2] <- summary(progression_model)$coefficients["G[, j]", "Std. Error"]
-  progression_GWAS[i, j, 3] <- summary(progression_model)$coefficients["G[, j]", "Pr(>|z|)"]
+  progression_GWAS[j, 1] <- summary(progression_model)$coefficients["G[, j]", "Estimate"]
+  progression_GWAS[j, 2] <- summary(progression_model)$coefficients["G[, j]", "Std. Error"]
+  progression_GWAS[j, 3] <- summary(progression_model)$coefficients["G[, j]", "Pr(>|z|)"]
 
 }
 
@@ -208,6 +211,8 @@ collider_bias_results <- rbind(collider_bias_results,
 ##Summarise methods results for each iteration
   
 loop_methods[[i]] <- list(collider_bias_results = collider_bias_results)
+loop_incidence_GWAS[[i]] <- list(incidence_GWAS = incidence_GWAS)
+loop_progression_GWAS[[i]] <- list(progression_GWAS = progression_GWAS)
 
 ##Diagnostics
 
