@@ -59,8 +59,8 @@ mr_horse_model = function() {
 }
 
 loop_methods <- vector('list', iter)
-incidence_GWAS <- array(0, dim = c(iter, nSNPs, 3))
-progression_GWAS <- array(0, dim = c(iter, nSNPs, 3))
+loop_incidence_GWAS <- vector('list', iter)
+loop_progression_GWAS <- vector('list', iter)
 incidence_rsq <- matrix(0, iter)
 progression_rsq <- matrix(0, iter)
 correlation_coef <- matrix(0, iter)
@@ -71,6 +71,8 @@ ci_coverage <- matrix(0, iter)
 for (i in 1:iter) {
 
 G <- matrix(0, n, nSNPs)
+incidence_GWAS <- matrix(0, nSNPs, 3)
+progression_GWAS <- matrix(0, nSNPs, 3)
 
 ##Simulate common cause (collider).
 U <- rnorm(n, 0, 1)
@@ -93,9 +95,6 @@ P[I == 0] <- NA
 
 ##Simulate GWAS of incidence.
 
-incidence_GWAS <- data.frame()
-progression_GWAS <- data.frame()
-  
 for (j in 1:nSNPs) {
   
   incidence_model <- glm(I ~ G[,j], family = binomial)
@@ -126,8 +125,8 @@ ivw <- mr_ivw(incidence_GWAS[, 1], progression_GWAS[, 1],
 dudbridgeweights <- 1/progression_GWAS[, 2]^2
 weighting <- (sum(dudbridgeweights*incidence_GWAS[, 1]^2))/
             ((sum(dudbridgeweights*incidence_GWAS[, 1]^2))-(sum(dudbridgeweights*incidence_GWAS[, 2]^2)))
-cf.db <- ivw$b*weighting
-cf.se.db <- ivw$se*weighting
+cf.db <- ivw$Estimate*weighting
+cf.se.db <- ivw$StdError*weighting
 
 collider_bias_results <- rbind(collider_bias_results,
                                data.frame(Method = 'Dudbridge',
