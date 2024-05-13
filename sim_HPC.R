@@ -408,6 +408,6 @@ for (n in 1:reps) {
   incidence_mean[n] <- mean(I)
   progression_mean[n] <- mean(P)
 
-  save(loop_incidence_GWAS, loop_progression_GWAS, loop_methods, incidence_rsq, progression_rsq, correlation_coef, incidence_mean, progression_mean, file = 'sim_results.RData')
+  save(loop_incidence_GWAS, loop_progression_GWAS, loop_methods, incidence_rsq, progression_rsq, collider_rsq, correlation_coef, incidence_mean, progression_mean, file = 'sim_results.RData')
 
 }
