@@ -1,9 +1,10 @@
+rm(list=ls())
 setwd("/user/home/vc23656/Collider_sims")
 .libPaths("/user/work/vc23656/")
 expit <- function (x) exp(x) / (1 + exp(x))
 set.seed(54545)
-iter <- 1000
-n <- 1e5
+reps <- 1000
+n.ind <- 1e5
 nSNPs <- 100
 incidence.SNPs <- 1:90
 progression.SNPs <- 91:100
@@ -256,34 +257,35 @@ mr_horse_model = function() {
   theta ~ dunif(-10, 10)
 }
 
-loop_methods <- vector('list', iter)
-loop_incidence_GWAS <- vector('list', iter)
-loop_progression_GWAS <- vector('list', iter)
-incidence_rsq <- matrix(0, iter)
-progression_rsq <- matrix(0, iter)
-correlation_coef <- matrix(0, iter)
-incidence_mean <- matrix(0, iter)
-progression_mean <- matrix(0, iter)
+loop_methods <- vector('list', reps)
+loop_incidence_GWAS <- vector('list', reps)
+loop_progression_GWAS <- vector('list', reps)
+incidence_rsq <- matrix(0, reps)
+progression_rsq <- matrix(0, reps)
+collider_rsq <- matrix(0, reps)
+correlation_coef <- matrix(0, reps)
+incidence_mean <- matrix(0, reps)
+progression_mean <- matrix(0, reps)
 
-for (i in 1:iter) {
+for (n in 1:reps) {
   
-  G <- matrix(0, n, nSNPs)
+  G <- matrix(0, n.ind, nSNPs)
   
   ##Simulate common cause (collider).
-  U <- rnorm(n, 0, 1)
+  U <- rnorm(n.ind, 0, 1)
   
   ##Simulate one-sample genetic data from individual-level data - number of SNPs, generate MAF, ratios for how many affect I and P.
   maf <- runif(nSNPs, 0.05, 0.5)
-  for (j in 1:nSNPs) G[, j] <- rbinom(n, 2, maf[j])
+  for (j in 1:nSNPs) G[, j] <- rbinom(n.ind, 2, maf[j])
   incidence.betas <- rep(0, nSNPs)
   incidence.betas[incidence.SNPs] <- rnorm(length(incidence.SNPs), 0, 0.2)
   incidence.probs <- expit(-1 + as.vector(G %*% incidence.betas) + 1 * U)
-  I <- rbinom(n, 1, incidence.probs)
+  I <- rbinom(n.ind, 1, incidence.probs)
   
   progression.betas <- rep(0, nSNPs)
   progression.betas[progression.SNPs] <- rnorm(length(progression.SNPs), 0, 0.2)
   progression.probs <- expit(-1 + as.vector(G %*% progression.betas) + 1 * U)
-  P <- rbinom(n, 1, progression.probs)
+  P <- rbinom(n.ind, 1, progression.probs)
   
   ##Simulate GWAS of incidence.
   
@@ -393,17 +395,18 @@ for (i in 1:iter) {
   
   ##Summarise methods results for each iteration
   
-  loop_methods[[i]] <- list(collider_bias_results = collider_bias_results)
-  loop_incidence_GWAS[[i]] <- list(incidence_GWAS = incidence_GWAS)
-  loop_progression_GWAS[[i]] <- list(progression_GWAS = progression_GWAS)
+  loop_methods[[n]] <- list(collider_bias_results = collider_bias_results)
+  loop_incidence_GWAS[[n]] <- list(incidence_GWAS = incidence_GWAS)
+  loop_progression_GWAS[[n]] <- list(progression_GWAS = progression_GWAS)
   
   ##Diagnostics
   
-  incidence_rsq[i] <- summary(lm(I ~ G))$r.squared
-  progression_rsq[i] <- summary(lm(P ~ G))$r.squared
-  correlation_coef[i] <- cor(I,P)
-  incidence_mean[i] <- mean(I)
-  progression_mean[i] <- mean(P)
+  incidence_rsq[n] <- summary(lm(I ~ G))$r.squared
+  progression_rsq[n] <- summary(lm(P ~ G))$r.squared
+  collider_rsq[n] <- summary(lm(U ~ G))$r.squared
+  correlation_coef[n] <- cor(I,P)
+  incidence_mean[n] <- mean(I)
+  progression_mean[n] <- mean(P)
 
   save(loop_incidence_GWAS, loop_progression_GWAS, loop_methods, incidence_rsq, progression_rsq, correlation_coef, incidence_mean, progression_mean, file = 'sim_results.RData')
 
