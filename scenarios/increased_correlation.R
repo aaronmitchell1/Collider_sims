@@ -1,5 +1,5 @@
 rm(list=ls())
-setwd("/user/home/vc23656/Collider_sims")
+setwd("/user/home/vc23656/Collider_sims/increased_corr")
 .libPaths("/user/work/vc23656/")
 expit <- function (x) exp(x) / (1 + exp(x))
 set.seed(54545)
