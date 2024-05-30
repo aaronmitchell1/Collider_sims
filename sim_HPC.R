@@ -354,8 +354,8 @@ for (n in 1:reps) {
   
   ##MR-RAPS
   
-  MR_RAPS_Res <- mr.raps(incidence_GWAS[, 1], incidence_GWAS[, 2], 
-                         progression_GWAS[, 1], progression_GWAS[, 2])
+  MR_RAPS_Res <- mr.raps(b_exp = incidence_GWAS[, 1], se_exp = incidence_GWAS[, 2], 
+                         b_out = progression_GWAS[, 1], se_out = progression_GWAS[, 2])
   
   MR_RAPS_Beta <- MR_RAPS_Res$beta.hat
   MR_RAPS_SE <- MR_RAPS_Res$beta.se
@@ -417,7 +417,7 @@ for (n in 1:reps) {
   progression_mean[n] <- mean(P)
   true_value_model <- glm(I ~ G + U + G:U, family = poisson)
   interaction_df <- summary(model)$coefficients[(nSNPs+3):(2*nSNPs+2), 1]
-  loop_var_interaction[[n]] <- data.frame(interaction_df$estimate*var(U))
+  loop_var_interaction[[n]] <- data.frame(interaction_df*var(U))
   loop_P[[n]] <- P
   loop_I[[n]] <- I
   loop_Pobs[[n]] <- Pobs
