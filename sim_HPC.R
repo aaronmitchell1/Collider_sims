@@ -3,7 +3,7 @@ setwd("/user/home/vc23656/Collider_sims")
 .libPaths("/user/work/vc23656/")
 expit <- function (x) exp(x) / (1 + exp(x))
 set.seed(54545)
-reps <- 1000
+reps <- 500
 n.ind <- 1e5
 nSNPs <- 100
 incidence.SNPs <- 1:90
@@ -260,16 +260,19 @@ mr_horse_model = function() {
 loop_methods <- vector('list', reps)
 loop_incidence_GWAS <- vector('list', reps)
 loop_progression_GWAS <- vector('list', reps)
+loop_Pobs <- vector('list', reps)
+loop_P <- vector('list', reps)
+loop_I <- vector('list', reps)
+loop_G <- vector('list', reps)
+loop_var_interaction <- vector('list', reps)
+
 incidence_rsq <- matrix(0, reps)
 progression_rsq <- matrix(0, reps)
 collider_rsq <- matrix(0, reps)
 correlation_coef <- matrix(0, reps)
 incidence_mean <- matrix(0, reps)
 progression_mean <- matrix(0, reps)
-Pobs <- matrix(0, reps)
-interaction_df <- data.frame()
-var_interaction_df <- data.frame()
-true_values <- data.frame(matrix(ncol = nSNPs, nrow = reps))
+interaction_df <- matrix(0, reps)
 
 for (n in 1:reps) {
   
@@ -282,12 +285,12 @@ for (n in 1:reps) {
   maf <- runif(nSNPs, 0.05, 0.5)
   for (j in 1:nSNPs) G[, j] <- rbinom(n.ind, 2, maf[j])
   incidence.betas <- rep(0, nSNPs)
-  incidence.betas[incidence.SNPs] <- rnorm(length(incidence.SNPs), 0, 0.2)
+  incidence.betas[incidence.SNPs] <- rnorm(length(incidence.SNPs), 0, 0.3)
   incidence.probs <- expit(-1 + as.vector(G %*% incidence.betas) + 1 * U)
   I <- rbinom(n.ind, 1, incidence.probs)
   
   progression.betas <- rep(0, nSNPs)
-  progression.betas[progression.SNPs] <- rnorm(length(progression.SNPs), 0, 0.2)
+  progression.betas[progression.SNPs] <- rnorm(length(progression.SNPs), 0, 0.3)
   progression.probs <- expit(-1 + as.vector(G %*% progression.betas) + 1 * U)
   P <- rbinom(n.ind, 1, progression.probs)
   Pobs <- P; Pobs[I == 0] <- NA
@@ -414,9 +417,11 @@ for (n in 1:reps) {
   progression_mean[n] <- mean(P)
   true_value_model <- glm(I ~ G + U + G:U, family = poisson)
   interaction_df <- summary(model)$coefficients[(nSNPs+3):(2*nSNPs+2), 1]
-  var_interaction_df <- data.frame(interaction_df$estimate*var(U))
+  loop_var_interaction[[n]] <- data.frame(interaction_df$estimate*var(U))
+  loop_P[[n]] <- P
+  loop_I[[n]] <- I
+  loop_Pobs[[n]] <- Pobs
 
-
-  save(loop_incidence_GWAS, loop_progression_GWAS, loop_methods, incidence_rsq, progression_rsq, collider_rsq, correlation_coef, incidence_mean, progression_mean, Pobs, var_interaction_df file = 'sim_results.RData')
+  save(loop_incidence_GWAS, loop_progression_GWAS, loop_methods, incidence_rsq, progression_rsq, collider_rsq, correlation_coef, incidence_mean, progression_mean, loop_Pobs, loop_I, loop_P, loop_var_interaction,  file = 'sim_results.RData')
 
 }
