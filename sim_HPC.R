@@ -13,6 +13,7 @@ library(mr.raps)
 library(mclust)
 library(R2jags)
 library(dplyr)
+library(broom)
 
 shclust <- function(gwas, pi0, sxy1){
   # binding variable locally to the function:
@@ -266,6 +267,10 @@ collider_rsq <- matrix(0, reps)
 correlation_coef <- matrix(0, reps)
 incidence_mean <- matrix(0, reps)
 progression_mean <- matrix(0, reps)
+Pobs <- matrix(0, reps)
+interaction_df <- data.frame()
+var_interaction_df <- data.frame()
+true_values <- data.frame(matrix(ncol = nSNPs, nrow = reps))
 
 for (n in 1:reps) {
   
@@ -286,6 +291,7 @@ for (n in 1:reps) {
   progression.betas[progression.SNPs] <- rnorm(length(progression.SNPs), 0, 0.2)
   progression.probs <- expit(-1 + as.vector(G %*% progression.betas) + 1 * U)
   P <- rbinom(n.ind, 1, progression.probs)
+  Pobs <- P; Pobs[I == 0] <- NA
   
   ##Simulate GWAS of incidence.
   
@@ -407,7 +413,12 @@ for (n in 1:reps) {
   correlation_coef[n] <- cor(I,P)
   incidence_mean[n] <- mean(I)
   progression_mean[n] <- mean(P)
+  true_value_model <- glm(I ~ G + U + G:U, family = poisson)
+  tidy_true_value_model <- broom::tidy(true_value_model)
+  interaction_df <- tidy_true_value_model[grepl(':U', tidy_true_value_model$term),]
+  var_interaction_df <- data.frame(interaction_df$estimate*var(U))
 
-  save(loop_incidence_GWAS, loop_progression_GWAS, loop_methods, incidence_rsq, progression_rsq, collider_rsq, correlation_coef, incidence_mean, progression_mean, file = 'sim_results.RData')
+
+  save(loop_incidence_GWAS, loop_progression_GWAS, loop_methods, incidence_rsq, progression_rsq, collider_rsq, correlation_coef, incidence_mean, progression_mean, Pobs, var_interaction_df file = 'sim_results.RData')
 
 }
