@@ -13,7 +13,6 @@ library(mr.raps)
 library(mclust)
 library(R2jags)
 library(dplyr)
-library(broom)
 
 shclust <- function(gwas, pi0, sxy1){
   # binding variable locally to the function:
@@ -414,8 +413,7 @@ for (n in 1:reps) {
   incidence_mean[n] <- mean(I)
   progression_mean[n] <- mean(P)
   true_value_model <- glm(I ~ G + U + G:U, family = poisson)
-  tidy_true_value_model <- broom::tidy(true_value_model)
-  interaction_df <- tidy_true_value_model[grepl(':U', tidy_true_value_model$term),]
+  interaction_df <- summary(model)$coefficients[(nSNPs+3):(2*nSNPs+2), 1]
   var_interaction_df <- data.frame(interaction_df$estimate*var(U))
 
 
