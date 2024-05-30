@@ -3,7 +3,7 @@ setwd("/user/home/vc23656/Collider_sims")
 .libPaths("/user/work/vc23656/")
 expit <- function (x) exp(x) / (1 + exp(x))
 set.seed(54545)
-reps <- 500
+reps <- 1000
 n.ind <- 1e5
 nSNPs <- 100
 incidence.SNPs <- 1:90
@@ -416,7 +416,7 @@ for (n in 1:reps) {
   incidence_mean[n] <- mean(I)
   progression_mean[n] <- mean(P)
   true_value_model <- glm(I ~ G + U + G:U, family = poisson)
-  interaction_df <- summary(model)$coefficients[(nSNPs+3):(2*nSNPs+2), 1]
+  interaction_df <- summary(true_value_model)$coefficients[(nSNPs+3):(2*nSNPs+2), 1]
   loop_var_interaction[[n]] <- data.frame(interaction_df*var(U))
   loop_P[[n]] <- P
   loop_I[[n]] <- I
