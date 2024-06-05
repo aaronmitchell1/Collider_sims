@@ -1,3 +1,5 @@
+##Basic method to simulate I and P without running any analyses.
+
 ## Auxiliary function to simulate logistic data.
 expit <- function (x) exp(x) / (1 + exp(x))
 
@@ -16,6 +18,7 @@ for (j in 1:nSNPs) G[, j] <- rbinom(n, 2, maf[j])
 incidence.betas <- rep(0, nSNPs)
 incidence.betas[incidence.SNPs] <- rnorm(length(incidence.SNPs), 0, 0.2)
 incidence.probs <- expit(-1 + as.vector(G %*% incidence.betas) + 1 * U)
+
 I <- rbinom(n, 1, incidence.probs)
 progression.betas <- rep(0, nSNPs)
 progression.betas[progression.SNPs] <- rnorm(length(progression.SNPs), 0, 0.2)
@@ -44,3 +47,4 @@ for (j in 1:nSNPs) {
   progression_GWAS[j, 1] <- summary(progression_model)$coefficients["G[, j]", "Estimate"]
   progression_GWAS[j, 2] <- summary(progression_model)$coefficients["G[, j]", "Std. Error"]
   progression_GWAS[j, 3] <- summary(progression_model)$coefficients["G[, j]", "Pr(>|z|)"]
+}
