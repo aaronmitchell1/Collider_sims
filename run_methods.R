@@ -1,28 +1,213 @@
-##Dudbridge method, based on April Hartley's code.
+#Takes data for I and P in list format and runs the specified methods, saving the results. Number of reps needs to be set to be the same as that in the DGM.
 
-ivw <- mr_ivw(incidence_GWAS[, 1], progression_GWAS[, 1], 
-                 incidence_GWAS[, 2], progression_GWAS[, 2])
-dudbridgeweights <- 1/progression_GWAS[, 2]^2
-weighting <- (sum(dudbridgeweights*incidence_GWAS[, 1]^2))/
-            ((sum(dudbridgeweights*incidence_GWAS[, 1]^2))-(sum(dudbridgeweights*incidence_GWAS[, 2]^2)))
-cf.db <- ivw$b*weighting
-cf.se.db <- ivw$se*weighting
-
-##Weighted median method, simplest to implement in Stephen Burgess' MendelianRandomization package.
-
+rm(list=ls())
+setwd("/user/home/vc23656/Collider_sims")
+.libPaths("/user/work/vc23656/")
+reps <- 1000
+load(file = "/user/home/vc23656/Collider_sims/incidence_GWAS.RData")
+load(file = "/user/home/vc23656/Collider_sims/pobs_GWAS.RData")
 library(MendelianRandomization)
-Weighted_Median_Res <- mr_median((mr_input(bx = incidence_GWAS$Estimate, bxse = incidence_GWAS$StdErr,
-                                       by = progression_GWAS$Estimate, byse = progression_GWAS$StdErr)))
-
-##MR-RAPS
-
 library(mr.raps)
-MR_RAPS_Res <- mr.raps(incidence_GWAS$Estimate, incidence_GWAS$StdErr, 
-                       progression_GWAS$Estimate, progression_GWAS$StdErr)
-
-##MR-Horse
-##Functions to run the new method from Stephen Burgess and Andrew Grant, also requires JAGS to be installed (seperate to R).
+library(mclust)
 library(R2jags)
+library(dplyr)
+
+loop_methods <- vector('list', reps)
+
+shclust <- function(gwas, pi0, sxy1){
+  # binding variable locally to the function:
+  ## To avoid Notes: e.g. "shclust: no visible binding for global variable ‘xbeta’"
+  xbeta <- ybeta <- clusters <- NULL
+  
+  sx0 = sx1 = gwas %>% summarise(sd(xbeta)) %>% pull
+  sy0 = sy1 = gwas %>% summarise(sd(ybeta)) %>% pull
+  dir0 = gwas %>% summarise(cov(xbeta, ybeta)) %>% pull %>% sign()
+  if (dir0==0) stop("All associations with at least either x or y are constant")
+  
+  # convergence criterion
+  loglkl_ck = 0
+  
+  ### EM algorithm
+  for(iter in 1:50000){
+    #### The E step:
+    # covariance matrix for the target component (f0)
+    sxy0 = sx0*sy0*dir0*0.95       # the x & y perfectly correlated under 1st component  #===========
+    sigma0 = matrix(c(sx0^2,sxy0,sxy0,sy0^2), 2, 2)
+    
+    # 1st component
+    f0 = gwas %>%
+      dplyr::select(xbeta, ybeta) %>%
+      mclust::dmvnorm(mean=c(0,0), sigma=sigma0)
+    f0[f0<1e-300] = 1e-300
+    
+    # covariance matrix for the component (f1)
+    sigma1 = matrix(c(sx1^2,sxy1,sxy1,sy1^2), 2, 2)
+    
+    # 2nd component
+    f1 = gwas %>%
+      dplyr::select(xbeta, ybeta) %>%
+      mclust::dmvnorm(mean=c(0,0), sigma=sigma1)
+    f1[f1<1e-300] = 1e-300
+    
+    # loglik of the mixture model: pi0 * f0 + (1-p0) * f1
+    loglkl = sum(log(pi0*f0+(1-pi0)*f1))
+    
+    ## proportional contribution of density of f0 (for every point) to the total mixture
+    pt = pi0*f0/(pi0*f0+(1-pi0)*f1)
+    pt[pt>0.9999999] = 0.9999999
+    
+    #### The M step:
+    # update pi0
+    pi0 = mean(pt)
+    if (pi0<0.0001) pi0 = 0.0001
+    if (pi0>0.9999) pi0 = 0.9999
+    
+    # update sx0 & sy0
+    sx0 = gwas %>% summarise(sqrt(sum(pt*(xbeta^2))/sum(pt))) %>% pull
+    sy0 = gwas %>% summarise(sqrt(sum(pt*(ybeta^2))/sum(pt))) %>% pull
+    dir0 = gwas %>% summarise(sum(pt*xbeta*ybeta)/sum(pt)) %>% pull %>% sign()
+    if (dir0==0) dir0=sample(c(1,-1), 1)   # avoid slope = 0 (horizontal line)
+    
+    # update sx1, sy1 & sxy1
+    sx1 = gwas %>% summarise(sqrt(sum((1-pt)*(xbeta^2))/(length(xbeta)-sum(pt)))) %>% pull
+    sy1 = gwas %>% summarise(sqrt(sum((1-pt)*(ybeta^2))/(length(ybeta)-sum(pt)))) %>% pull
+    sxy1 = gwas %>% summarise(sum((1-pt)*xbeta*ybeta)/(length(xbeta)-sum(pt))) %>% pull
+    if (abs(sxy1) > 0.75*sx1*sy1)  sxy1 = sign(sxy1)*0.75*sx1*sy1     #===========
+    
+    ## Check convergence
+    if (iter%%10==0){
+      if ((loglkl - loglkl_ck)/loglkl < 1e-10){
+        break
+      } else {
+        loglkl_ck = loglkl
+      }
+    }
+  }
+  
+  # Diagnosis
+  if (iter == 50000) warning("The algorithm may not have converged.\n")
+  
+  ### Results
+  Fit = gwas %>% mutate(pt = pt) %>%
+    mutate(po = 1-pt, clusters = factor(ifelse(pt >= 0.5, "Hunted", "Pleiotropic")))
+  
+  # slope of the eigenvector
+  b = dir0*sy0/sx0
+  bse = 0
+  b_CI = c(b - 1.96*bse, b + 1.96*bse)
+  entropy = Fit %>% filter(clusters == "Hunted") %>% summarise(mean(pt)) %>% pull
+  
+  return(list(b=b, bse=bse, b_CI=b_CI, iter=iter, pi0=pi0, entropy=entropy, Fit=Fit))
+}
+
+hunt = function(dat, snp_col="SNP", xbeta_col="BETA.incidence", xse_col="SE.incidence", xp_col="Pval.incidence",
+                ybeta_col="BETA.prognosis", yse_col="SE.prognosis", yp_col="Pval.prognosis",
+                xp_thresh=0.001, init_pi = 0.6, init_sigmaIP = 1e-5, Bootstrapping = TRUE, M = 100,
+                show_adjustments = FALSE){
+  
+  # binding variable locally to the function:
+  ## To avoid Notes: e.g. "hunt: no visible binding for global variable ‘xp’"; "hunt: no visible binding for global variable ‘xbeta’"
+  xp <- xbeta <- ybeta <- clusters <- yse <- xse <- ybeta_adj <- yse_adj <- NULL
+  
+  all_cols <- c(snp_col, xbeta_col, xse_col, xp_col, ybeta_col, yse_col, yp_col)
+  i <-  names(dat) %in% all_cols
+  if (sum(i) == 0)
+  {
+    stop("None of the specified columns present!")
+  }
+  dat <- dat[, i]
+  
+  # Check if columns required for SH are present
+  cols_req <- c(xbeta_col, xse_col, ybeta_col, yse_col)
+  if (!all(cols_req %in% names(dat)))
+  {
+    stop("The following columns are not present and are required for the Slope-Hunter analysis:\n", paste(cols_req[!cols_req %in% names(dat)]), collapse="\n")
+  }
+  
+  # generate p-values and SNP IDs if are not given
+  cols_desired <- c(xp_col, yp_col, snp_col)
+  i <- cols_desired %in% names(dat)
+  if (!all(i))
+  {
+    message("The following column(s) is not present and will be generated:\n", paste(cols_desired[!i]))
+    if(!i[1]){dat[[xp_col]] = pchisq((dat[[xbeta_col]]/dat[[xse_col]])^2, 1, lower.tail = FALSE)}
+    if(!i[2]){dat[[yp_col]] = pchisq((dat[[ybeta_col]]/dat[[yse_col]])^2, 1, lower.tail = FALSE)}
+    if(!i[3]){dat[[snp_col]] = paste0("snp", 1:nrow(dat))}
+  }
+  
+  names(dat)[names(dat) == snp_col] <- "SNP"
+  names(dat)[names(dat) == xbeta_col] <- "xbeta"
+  names(dat)[names(dat) == xse_col] <- "xse"
+  names(dat)[names(dat) == xp_col] <- "xp"
+  names(dat)[names(dat) == ybeta_col] <- "ybeta"
+  names(dat)[names(dat) == yse_col] <- "yse"
+  names(dat)[names(dat) == yp_col] <- "yp"
+  
+  # filter in the variants associated with x
+  gwas <- dat[, c("SNP", "xbeta", "xse", "xp", "ybeta", "yse", "yp")] %>%
+    filter(xp <= xp_thresh)
+  
+  # fit slope-hunter model
+  Model = shclust(gwas, pi0=init_pi, sxy1=init_sigmaIP)
+  b = Model$b
+  
+  # estimate bse
+  if (Bootstrapping){
+    b.bts = vector("numeric", M)
+    for(i in 1:M){
+      print(paste("Bootstrap sample", i, "of", M, "samples ..."))   ### replace it by a progress bar ...
+      Bts = sample(1:nrow(gwas), size = nrow(gwas), replace = TRUE)
+      DT = gwas[Bts,]
+      Model.DT = shclust(DT, pi0=init_pi, sxy1=init_sigmaIP)
+      b.bts[i] = Model.DT$b
+    }
+    
+    # If any of the model fits for the bootstrap samples generated NA
+    if(any(is.na(b.bts))){
+      b.bts = na.omit(b.bts)
+      warning(paste("Only", length(b.bts), "bootstrap samples - out of", M, "- produced converged models used for estimating the standard error." ))
+    }
+    
+    # calculate bse
+    bse = sd(abs(b.bts))
+    b_CI = c(b - 1.96*bse, b + 1.96*bse)
+  } else{
+    bse = Model$bse
+    b_CI = Model$b_CI
+  }
+  
+  # model fit
+  Fit = Model$Fit
+  
+  if(show_adjustments)
+  {
+    ##### Adjust
+    est = dat %>% mutate(ybeta_adj = ybeta - (b * xbeta),
+                         yse_adj = sqrt(yse^2 + (b^2 * xse^2) + (xbeta^2 * bse^2) + (xse^2 * bse^2)),
+                         yp_adj = pchisq((ybeta_adj/yse_adj)^2, 1, lower.tail = FALSE))
+  }
+  
+  # Print main results
+  print(paste0("Estimated slope: ", b))
+  print(paste0("SE of the slope: ", bse))
+  print(paste0("95% CI: ", b_CI[1], ", ", b_CI[2]))
+  
+  # Return
+  if(Bootstrapping & show_adjustments){
+    SH = list(est=est, b=b, bse=bse, b_CI=b_CI, pi=Model$pi0, entropy=Model$entropy, Fit=Model$Fit, iter = Model$iter, Bts.est = b.bts)
+  }
+  if(Bootstrapping & !show_adjustments){
+    SH = list(b=b, bse=bse, b_CI=b_CI, pi=Model$pi0, entropy=Model$entropy, Fit=Model$Fit, iter = Model$iter, Bts.est = b.bts)
+  }
+  if(!Bootstrapping & show_adjustments){
+    SH = list(est=est, b=b, bse=bse, b_CI=b_CI, pi=Model$pi0, entropy=Model$entropy, Fit=Model$Fit, iter = Model$iter)
+  }
+  if(!Bootstrapping & !show_adjustments){
+    SH = list(b=b, bse=bse, b_CI=b_CI, pi=Model$pi0, entropy=Model$entropy, Fit=Model$Fit, iter = Model$iter)
+  }
+  class(SH) <- "SH"
+  return(SH)
+}
 
 mr_horse = function(D, no_ini = 3, variable.names = "theta", n.iter = 10000, n.burnin = 10000){
   if("theta" %in% variable.names){
@@ -72,87 +257,99 @@ mr_horse_model = function() {
   theta ~ dunif(-10, 10)
 }
 
-##Reformat data and run the MR-Horse method.
-
-MR_Horse_Data <- data.frame(incidence_GWAS$Estimate, progression_GWAS$Estimate, 
-                            incidence_GWAS$StdErr, progression_GWAS$StdErr)
-names(MR_Horse_Data)[1] <- "betaX"
-names(MR_Horse_Data)[2] <- "betaY"
-names(MR_Horse_Data)[3] <- "betaXse"
-names(MR_Horse_Data)[4] <- "betaYse"
-MR_Horse_Res <- mr_horse(MR_Horse_Data)
-
-##Slope-Hunter
-library(SlopeHunter)
-
-##Reformat data and run the SlopeHunter method.
-SlopeHunter_Data <- data.frame(incidence_GWAS$Estimate, incidence_GWAS$StdErr, 
-                               progression_GWAS$Estimate, progression_GWAS$StdEr)
-names(SlopeHunter_Data)[1] <- "xbeta_col"
-names(SlopeHunter_Data)[2] <- "ybeta_col"
-names(SlopeHunter_Data)[3] <- "xse_col"
-names(SlopeHunter_Data)[4] <- "yse_col"
-
-SlopeHunter_Res <- hunt(dat = SlopeHunter_Data, xbeta_col = "xbeta_col", 
-                        xse_col = "xse_col", ybeta_col = "ybeta_col", yse_col = "yse_col")
-
-##Summarise results
-##Idea taken from Andrew Elmore.
-library(dplyr)
-
-collider_bias_results <- data.frame(
-  Method = character(),
-  Correction_Beta = numeric(),
-  Correction_SE = numeric()
-)
-
-##Add more to this later
-
-collider_bias_type <- list(
-  Slopehunter = "Slopehunter"
-  Dudbridge = "Dudbridge",
-  Weighted_median = "Weighted_median",
-  MR_Horse = "MR_Horse",
-  MR_RAPS = "MR_RAPS"
-)
-
-##Add Slopehunter results
-
-collider_bias_results <- dplyr::add_row(collider_bias_results,
-                                                Method = collider_bias_type$Slopehunter,
-                                                Correction_Beta = SlopeHunter_Res$b,
-                                                Correction_SE = SlopeHunter_Res$bse
-        )
-
-##Add Dudbridge results
-
-collider_bias_results <- dplyr::add_row(collider_bias_results,
-                                                Method = collider_bias_type$Dudbridge,
-                                                Correction_Beta = cf.db,
-                                                Correction_SE = cf.se.db
-        )
-
-##Add Weighted Median results
-
-collider_bias_results <- dplyr::add_row(collider_bias_results,
-                                        Method = collider_bias_type$Weighted_median,
-                                        Correction_Beta = Weighted_Median_Res$b,
-                                        Correction_SE = Weighted_Median_Res$se
-)
-
-##Add MR-RAPS results
-
-collider_bias_results <- dplyr::add_row(collider_bias_results,
-                                        Method = collider_bias_type$MR_RAPS,
-                                        Correction_Beta = MR_RAPS_Res$beta.hat,
-                                        Correction_SE = MR_RAPS_Res$beta.se
-)
-
-##Add MR-Horse results
-##Bayesian method so outputs SD instead of SE?
-
-collider_bias_results <- dplyr::add_row(collider_bias_results,
-                                        Method = collider_bias_type$MR_Horse,
-                                        Correction_Beta = MR_Horse_Res$MR_Estimate$Estimate,
-                                        Correction_SE = MR_Horse_Res$MR_Estimate$SD
-)
+for (n in 1:reps) {
+  
+  incidence_GWAS <- loop_incidence_GWAS[[n]]$incidence_GWAS
+  progression_GWAS <- loop_progression_obs_GWAS[[n]]$progression_obs_GWAS
+  collider_bias_results <- data.frame()
+  
+  ##Run the methods
+  
+  ##Dudbridge method (updated CWLS from Cai et al. paper).
+  
+  ivw <- mr_ivw((mr_input(bx = incidence_GWAS[, 1], by = progression_GWAS[, 1], 
+                          bxse = incidence_GWAS[, 2], byse = progression_GWAS[, 2])))
+  dudbridgeweights <- 1/progression_GWAS[, 2]^2
+  weighting <- (sum(dudbridgeweights*incidence_GWAS[, 1]^2))/
+    ((sum(dudbridgeweights*incidence_GWAS[, 1]^2))-(sum(dudbridgeweights*incidence_GWAS[, 2]^2)))
+  cf.db <- ivw$Estimate*weighting
+  cf.se.db <- ivw$StdError*weighting
+  
+  collider_bias_results <- rbind(collider_bias_results,
+                                 data.frame(Method = 'Dudbridge',
+                                            Correction_Beta = cf.db,
+                                            Correction_SE = cf.se.db
+                                 ))
+  
+  ##Weighted median
+  
+  Weighted_Median_Res <- mr_median((mr_input(bx = incidence_GWAS[, 1], by = progression_GWAS[, 1], 
+                                             bxse = incidence_GWAS[, 2], byse = progression_GWAS[, 2])))
+  
+  Weighted_Median_Beta <- Weighted_Median_Res$Estimate
+  Weighted_Median_SE <- Weighted_Median_Res$StdError
+  
+  collider_bias_results <- rbind(collider_bias_results,
+                                 data.frame(Method = 'Weighted_median',
+                                            Correction_Beta = Weighted_Median_Beta,
+                                            Correction_SE = Weighted_Median_SE
+                                 ))
+  
+  ##MR-RAPS
+  
+  MR_RAPS_Res <- mr.raps(b_exp = incidence_GWAS[, 1], se_exp = incidence_GWAS[, 2], 
+                         b_out = progression_GWAS[, 1], se_out = progression_GWAS[, 2])
+  
+  MR_RAPS_Beta <- MR_RAPS_Res$beta.hat
+  MR_RAPS_SE <- MR_RAPS_Res$beta.se
+  
+  collider_bias_results <- rbind(collider_bias_results,
+                                 data.frame(Method = 'MR_RAPS',
+                                            Correction_Beta = MR_RAPS_Beta,
+                                            Correction_SE = MR_RAPS_SE
+                                 ))
+  
+  ##MR-Horse
+  ##Reformat data and run the MR-Horse method.
+  
+  MR_Horse_Data <- data.frame(betaX = incidence_GWAS[, 1], betaY = progression_GWAS[, 1], 
+                              betaXse = incidence_GWAS[, 2], betaYse = progression_GWAS[, 2])
+  
+  MR_Horse_Res <- mr_horse(MR_Horse_Data)
+  
+  MR_Horse_Beta <- MR_Horse_Res$MR_Estimate$Estimate
+  MR_Horse_SE <- MR_Horse_Res$MR_Estimate$SD
+  
+  collider_bias_results <- rbind(collider_bias_results,
+                                 data.frame(Method = 'MR_Horse',
+                                            Correction_Beta = MR_Horse_Beta,
+                                            Correction_SE = MR_Horse_SE
+                                 )) 
+  
+  ##Slope-Hunter
+  ##Reformat data and run the SlopeHunter method.
+  
+  SlopeHunter_Data <- data.frame(xbeta_col = incidence_GWAS[, 1], xse_col = incidence_GWAS[, 2], 
+                                 ybeta_col = progression_GWAS[, 1], yse_col = progression_GWAS[, 2])
+  
+  SlopeHunter_Res <- hunt(dat = SlopeHunter_Data, xbeta_col = 'xbeta_col', 
+                          xse_col = 'xse_col', ybeta_col = 'ybeta_col', yse_col = 'yse_col')
+  
+  Slopehunter_Beta <- SlopeHunter_Res$b
+  Slopehunter_SE <- SlopeHunter_Res$bse
+  
+  collider_bias_results <- rbind(collider_bias_results,
+                                 data.frame(Method = 'Slopehunter',
+                                            Correction_Beta = Slopehunter_Beta,
+                                            Correction_SE = Slopehunter_SE
+                                 ))
+  
+  ##Take df with true betas per iteration, take the differences between GWAS betas and methods betas, save per iteration. Do this for sumstats and pobs betas for each method
+  
+  ##Summarise methods results for each iteration
+  
+  loop_methods[[n]] <- list(collider_bias_results = collider_bias_results)
+  
+  save(loop_methods, file = 'pobs_1_sim_results.RData')
+  
+}
