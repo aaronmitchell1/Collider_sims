@@ -261,7 +261,7 @@ loop_methods <- vector('list', reps)
 loop_incidence_GWAS <- vector('list', reps)
 loop_progression_GWAS <- vector('list', reps)
 loop_Pobs <- vector('list', reps)
-loop_P <- vector('list', reps)
+#loop_P <- vector('list', reps)
 loop_I <- vector('list', reps)
 loop_G <- vector('list', reps)
 loop_var_interaction <- vector('list', reps)
@@ -313,7 +313,7 @@ for (n in 1:reps) {
   ##Simulate GWAS of progression.
   
   for (j in 1:nSNPs) {
-    progression_model <- glm(P ~ G[,j], family = binomial)
+    progression_model <- lm(Pobs ~ G[,j])
     progression_GWAS[j, 1] <- summary(progression_model)$coefficients["G[, j]", "Estimate"]
     progression_GWAS[j, 2] <- summary(progression_model)$coefficients["G[, j]", "Std. Error"]
     progression_GWAS[j, 3] <- summary(progression_model)$coefficients["G[, j]", "Pr(>|z|)"]
@@ -410,18 +410,18 @@ for (n in 1:reps) {
   ##Diagnostics
   
   incidence_rsq[n] <- summary(lm(I ~ G))$r.squared
-  progression_rsq[n] <- summary(lm(P ~ G))$r.squared
+  progression_rsq[n] <- summary(lm(Pobs ~ G))$r.squared
   collider_rsq[n] <- summary(lm(U ~ G))$r.squared
-  correlation_coef[n] <- cor(I,P)
+  correlation_coef[n] <- cor(I,Pobs)
   incidence_mean[n] <- mean(I)
-  progression_mean[n] <- mean(P)
+  progression_mean[n] <- mean(Pobs)
   true_value_model <- glm(I ~ G + U + G:U, family = poisson)
   interaction_df <- summary(true_value_model)$coefficients[(nSNPs+3):(2*nSNPs+2), 1]
   loop_var_interaction[[n]] <- data.frame(interaction_df*var(U))
-  loop_P[[n]] <- P
+#loop_P[[n]] <- P
   loop_I[[n]] <- I
   loop_Pobs[[n]] <- Pobs
 
-  save(loop_incidence_GWAS, loop_progression_GWAS, loop_methods, incidence_rsq, progression_rsq, collider_rsq, correlation_coef, incidence_mean, progression_mean, loop_Pobs, loop_I, loop_P, loop_var_interaction,  file = 'sim_results.RData')
+  save(loop_incidence_GWAS, loop_progression_GWAS, loop_methods, incidence_rsq, progression_rsq, collider_rsq, correlation_coef, incidence_mean, progression_mean, loop_Pobs, loop_I, loop_var_interaction,  file = 'sim_results.RData')
 
 }
