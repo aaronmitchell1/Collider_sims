@@ -538,7 +538,7 @@ results_data <- cbind(results_df, true_theta_Dudbridge, true_theta_MR_RAPS, true
 #Convert MR-Horse SDs to SEs (divide by root n individuals) to make them the same as other estimators.
 results_df$Correction_SE[results_df$Method=="MR_Horse"] <- (results_df$Correction_SE[results_df$Method=="MR_Horse"]/sqrt(n.ind))
 
-#Format them all in the same df and tidy up for rsimsum analysis
+#Format them all in the same df and tidy up for rsimsum analysis.
 
 results_data_Dudbridge <- data.frame(results_df$Correction_Beta[results_data$Method=="Dudbridge"], results_df$Correction_SE[results_data$Method=="Dudbridge"], results_df$Iteration[results_data$Method=="Dudbridge"], true_theta_Dudbridge$True); colnames(results_data_Dudbridge) = c("Estimate", "StdErr", "Iter", "True"))
 results_data_Weighted_median <- data.frame(results_df$Correction_Beta[results_data$Method=="Weighted_median"], results_df$Correction_SE[results_data$Method=="Weighted_median"], results_df$Iteration[results_data$Method=="Weighted_median"], true_theta_Weighted_median$True); colnames(results_data_Weighted_median) = c("Estimate", "StdErr", "Iter", "True")
@@ -551,3 +551,5 @@ res_Weighted_median <- simsum(data = results_data_Weighted_median, estvarname = 
 res_MR_RAPS <- simsum(data = results_data_MR_RAPS, estvarname = "Estimate", se = "StdErr", true = "True")
 res_MR_Horse <- simsum(data = results_data_MR_Horse, estvarname = "Estimate", se = "StdErr", true = "True")
 res_Slopehunter <- simsum(data = results_data_Slopehunter, estvarname = "Estimate", se = "StdErr", true = "True")
+
+#Repeat for Pobs/any variation of the DGM.
