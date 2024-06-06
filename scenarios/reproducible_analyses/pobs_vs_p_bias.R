@@ -552,4 +552,5 @@ res_MR_RAPS <- simsum(data = results_data_MR_RAPS, estvarname = "Estimate", se =
 res_MR_Horse <- simsum(data = results_data_MR_Horse, estvarname = "Estimate", se = "StdErr", true = "True")
 res_Slopehunter <- simsum(data = results_data_Slopehunter, estvarname = "Estimate", se = "StdErr", true = "True")
 
+#Then to extract the performance metrics from the simsum object, use (for example) res_Dudbridge$summ
 #Repeat for Pobs/any variation of the DGM.
