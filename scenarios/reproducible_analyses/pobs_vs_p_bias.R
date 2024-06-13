@@ -536,7 +536,7 @@ true_theta_SlopeHunter <- as.data.frame(mean_values$`tapply(true_df$true_value, 
 results_data <- cbind(results_df, true_theta_Dudbridge, true_theta_MR_RAPS, true_theta_Weighted_median, true_theta_MR_Horse, true_theta_SlopeHunter)
 
 #Convert MR-Horse SDs to SEs (divide by root n individuals) to make them the same as other estimators.
-results_df$Correction_SE[results_df$Method=="MR_Horse"] <- (results_df$Correction_SE[results_df$Method=="MR_Horse"]/sqrt(n.ind))
+results_df$Correction_SE[results_df$Method=="MR_Horse"] <- (results_df$Correction_SE[results_df$Method=="MR_Horse"]/sqrt(nSNPs))
 
 #Format them all in the same df and tidy up for rsimsum analysis.
 
