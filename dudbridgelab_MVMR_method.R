@@ -32,15 +32,12 @@ maf <- runif(nSNPs, 0.05, 0.5)
   D.betas[D.SNPs] <- rnorm(length(D.SNPs), 0, 0.3)
   D.probs <- expit(-1 + as.vector(G %*% D.betas) + 1 * Udy)
   D <- rbinom(n.ind, 1, D.probs)
-  Dobs <- D; Dobs[D == 0] <- NA
 
-Y
+  Y.betas[Y.SNPs] <- rnorm(length(Y.SNPs), 0, 0.3)
+  Y.probs <- expit(-1 + as.vector(G %*% Y.betas) + 1 * Udy)
+  Y <- rbinom(n.ind, 1, Y.probs)
+  Yobs <- Y; Yobs[Y == 0] <- NA
 
-  for (j in 1:nSNPs) G[, j] <- rbinom(n.ind, 2, maf[j])
-  X.betas <- rep(0, nSNPs)
-  X.betas[X.SNPs] <- rnorm(length(X.SNPs), 0, 0.3)
-  X.probs <- expit(-1 + as.vector(G %*% X.betas) + 1 * Uxy)
-  
-
+MVMR regression
 
 
