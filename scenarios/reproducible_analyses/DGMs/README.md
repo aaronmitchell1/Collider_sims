@@ -1,4 +1,4 @@
-This folder contains all DGMs that were used in our simulation study. Methods were run on Pobs in all scenarios but an additional GWAS was also simulated on P in a hypothetical complete case analysis.
+This folder contains all DGMs that were used in our simulation study. Methods were run on Pobs in all scenarios but an additional GWAS was also simulated on P in a hypothetical complete case analysis. All scenarios used a binary incidence trait and a continuous progression trait.
 
 Scripts in the format 401050 refers to n incidence SNPs, progression SNPs and SNPs affecting both in that order. 
 
