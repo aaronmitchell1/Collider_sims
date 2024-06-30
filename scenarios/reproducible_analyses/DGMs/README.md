@@ -12,4 +12,4 @@ Scripts in the format '0.2' refers to altering the P*U effect when generating pr
 
 'prog_int' adds interactions for 5 SNPs when generating progression betas with beta 0.1*U which are then fed into a GWAS which is naïve to the interactions.
 
-'post-sim-analysis' shows the analysis pipeline for each method in rsimsum and subsequent p/pobs calculations.
+'post-sim-analysis' shows the analysis pipeline for each method in rsimsum and subsequent P/Pobs calculations.
