@@ -172,8 +172,6 @@ for (scenario in scenarios) {
     }
 }
 
-
-
 #Line graph for bias across reps.
 ggplot(results_summary, aes(x = Scenario, y = Avg_Bias, color = Method, group = Method)) +
     geom_line(linewidth = 1) +       #Use `linewidth` in newer version of ggplot
