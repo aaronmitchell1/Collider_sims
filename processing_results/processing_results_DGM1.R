@@ -1,6 +1,7 @@
 #Process the results for DGM 1 where nSNPs was varied and make graph for bias and average SE.
 
 reps <- 1000
+nSNPs <- 100
 library(readr)
 library(ggplot2)
 library(tidyr)
