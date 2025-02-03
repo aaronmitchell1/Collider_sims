@@ -5,6 +5,7 @@ library(readr)
 library(ggplot2)
 library(tidyr)
 library(gridExtra)
+library(tidyverse)
 
 scenarios <- c("801010", "701020", "601030", "501040", "401050")
 path <- "/Users/vc23656/Downloads/Collider_sims/"
@@ -200,3 +201,86 @@ p2 <- ggplot(results_summary, aes(x = Scenario, y = Avg_SE, color = Method, grou
     )
 
 grid.arrange(grobs = list(p1, p2))
+
+#Empirical coverage for each scenario
+
+#Scenarios (nSNPs for each scenario)
+scenario_params <- list(
+  "801010" = c(80, 10, 10), 
+  "701020" = c(70, 10, 20),
+  "601030" = c(60, 10, 30),
+  "501040" = c(50, 10, 40),
+  "401050" = c(40, 10, 50)
+)
+
+#Function to calculate empirical coverage
+emp.coverage <- function(est, se, true) {
+  lb <- est - true + qnorm(0.025) * se
+  ub <- est - true + qnorm(0.975) * se
+  mean(lb * ub < 0)
+}
+
+#Function to format each scenario
+analyse_scenario <- function(scenario_name, reps = 1000) {
+  
+  load(paste0("/Users/vc23656/Downloads/Collider_sims/", scenario_name, "/sim_results.RData"))
+  
+  #nSNPs for each group (Incidence, Progression, Both)
+  nSNPs_incidence <- scenario_params[[scenario_name]][1]
+  nSNPs_progression <- scenario_params[[scenario_name]][2]
+  nSNPs_both <- scenario_params[[scenario_name]][3]
+  
+  #Matrices for results
+  progression_mat <- matrix(progression_df$Beta, nrow = reps, byrow = TRUE)
+  incidence_mat <- matrix(incidence_df$Beta, nrow = reps, byrow = TRUE)
+  true_mat <- matrix(true_df$Beta, nrow = reps, byrow = TRUE)
+  
+  #SE matrices
+  progression_se_mat <- matrix(progression_df$SE, nrow = reps, byrow = TRUE)
+  incidence_se_mat <- matrix(incidence_df$SE, nrow = reps, byrow = TRUE)
+  true_se_mat <- matrix(true_df$SE, nrow = reps, byrow = TRUE)
+  
+  #Compute adjusted summary statistics
+  dudbridge_mat <- progression_mat - matrix(results_mat[, 1], reps, nSNPs) * incidence_mat
+  median_mat <- progression_mat - matrix(results_mat[, 2], reps, nSNPs) * incidence_mat
+  mr_raps_mat <- progression_mat - matrix(results_mat[, 3], reps, nSNPs) * incidence_mat
+  mr_horse_mat <- progression_mat - matrix(results_mat[, 4], reps, nSNPs) * incidence_mat
+  slopehunter_mat <- progression_mat - matrix(results_mat[, 5], reps, nSNPs) * incidence_mat
+  
+  #Compute standard errors for adjusted estimates
+  dudbridge_se_mat <- sqrt(progression_se_mat^2 + (results_mat[, 1]^2 * incidence_se_mat^2) + (incidence_mat^2 * progression_se_mat^2) + (incidence_se_mat^2 * progression_se_mat^2))
+  median_se_mat <- sqrt(progression_se_mat^2 + (results_mat[, 2]^2 * incidence_se_mat^2) + (incidence_mat^2 * progression_se_mat^2) + (incidence_se_mat^2 * progression_se_mat^2))
+  mr_raps_se_mat <- sqrt(progression_se_mat^2 + (results_mat[, 3]^2 * incidence_se_mat^2) + (incidence_mat^2 * progression_se_mat^2) + (incidence_se_mat^2 * progression_se_mat^2))
+  mr_horse_se_mat <- sqrt(progression_se_mat^2 + (results_mat[, 4]^2 * incidence_se_mat^2) + (incidence_mat^2 * progression_se_mat^2) + (incidence_se_mat^2 * progression_se_mat^2))
+  slopehunter_se_mat <- sqrt(progression_se_mat^2 + (results_mat[, 5]^2 * incidence_se_mat^2) + (incidence_mat^2 * progression_se_mat^2) + (incidence_se_mat^2 * progression_se_mat^2))
+  
+  #Calculate empirical coverage
+  coverage <- data.frame(
+    Method = c("Dudbridge", "Median", "MR-Raps", "MR-Horse", "SlopeHunter"),
+    Coverage = c(
+      emp.coverage(dudbridge_mat, dudbridge_se_mat, true_mat),
+      emp.coverage(median_mat, median_se_mat, true_mat),
+      emp.coverage(mr_raps_mat, mr_raps_se_mat, true_mat),
+      emp.coverage(mr_horse_mat, mr_horse_se_mat, true_mat),
+      emp.coverage(slopehunter_mat, slopehunter_se_mat, true_mat)
+    ),
+    Scenario = scenario_name
+  )
+
+  #Return coverage as a list
+  list(coverage = coverage)
+}
+
+#Run the analysis for each scenario
+scenarios <- names(scenario_params)
+results <- lapply(scenarios, analyse_scenario)
+
+#Combine all results into one dataframe for ggplot
+coverage_df <- do.call(rbind, lapply(results, function(x) x$coverage))
+
+#Plot for empirical coverage                                        
+ggplot(coverage_df, aes(x = Method, y = Coverage, group = Scenario, color = Scenario)) +
+    geom_line(aes(group = Scenario), size = 1) +  # Ensure grouping by Scenario
+    geom_point() +
+    ylim(0.7, 1.0) +
+    theme_bw()
