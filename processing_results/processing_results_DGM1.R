@@ -4,6 +4,7 @@ reps <- 1000
 library(readr)
 library(ggplot2)
 library(tidyr)
+library(gridExtra)
 
 scenarios <- c("801010", "701020", "601030", "501040", "401050")
 path <- "/Users/vc23656/Downloads/Collider_sims/"
@@ -173,7 +174,7 @@ for (scenario in scenarios) {
 }
 
 #Line graph for bias across reps.
-ggplot(results_summary, aes(x = Scenario, y = Avg_Bias, color = Method, group = Method)) +
+p1 <- ggplot(results_summary, aes(x = Scenario, y = Avg_Bias, color = Method, group = Method)) +
     geom_line(linewidth = 1) +       #Use `linewidth` in newer version of ggplot
     geom_point(size = 3) +           
     theme_minimal() +
@@ -186,7 +187,7 @@ ggplot(results_summary, aes(x = Scenario, y = Avg_Bias, color = Method, group = 
     )
 
 #Line graph for average standard errors across reps.
-ggplot(results_summary, aes(x = Scenario, y = Avg_SE, color = Method, group = Method)) +
+p2 <- ggplot(results_summary, aes(x = Scenario, y = Avg_SE, color = Method, group = Method)) +
     geom_line(linewidth = 1) +       
     geom_point(size = 3) +           
     theme_minimal() +
@@ -197,3 +198,5 @@ ggplot(results_summary, aes(x = Scenario, y = Avg_SE, color = Method, group = Me
         legend.title = "Method",  
         plot.title = element_blank()     
     )
+
+grid.arrange(grobs = list(p1, p2))
