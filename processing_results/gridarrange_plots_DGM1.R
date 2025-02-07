@@ -41,35 +41,37 @@ summary_df <- tibble(
 p1 <- ggplot(summary_df, aes(x = Method, y = Mean_Bias)) +
     geom_bar(stat = "identity", fill = "skyblue") +
     theme_minimal() +
-    labs(title = "Mean Bias", y = "Mean Bias", x = "") +
+    labs(y = "Mean Bias", x = "") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 p2 <- ggplot(summary_df, aes(x = Method, y = Mean_SE)) +
     geom_bar(stat = "identity", fill = "salmon") +
     theme_minimal() +
-    labs(title = "Mean Standard Error", y = "Mean SE", x = "") +
+    labs(y = "Mean SE", x = "") +
     scale_y_continuous(limits = c(0, 0.03)) +  # Adjusted y-axis limit
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 p3 <- ggplot(summary_df, aes(x = Method, y = Empirical_Coverage)) +
     geom_bar(stat = "identity", fill = "lightgreen") +
     theme_minimal() +
-    labs(title = "Empirical Coverage", y = "Coverage", x = "") +
+    labs(y = "Coverage", x = "") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 p4 <- ggplot(summary_df, aes(x = Method, y = Type_I_Error_Null)) +
     geom_bar(stat = "identity", fill = "lightcoral") +
     theme_minimal() +
-    labs(title = "Type I Error (Null SNPs)", y = "Type I Error Rate", x = "") +
+    labs(y = "Type I Error Rate", x = "") +
     scale_y_continuous(limits = c(0, 0.4)) +  # Adjusted y-axis limit
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 p5 <- ggplot(summary_df, aes(x = Method, y = Power_to_Detect_NonNull)) +
     geom_bar(stat = "identity", fill = "lightblue") +
     theme_minimal() +
-    labs(title = "Power to Detect Non-Null Effects", y = "Power", x = "") +
+    labs(y = "Power", x = "") +
     scale_y_continuous(limits = c(0, 1.0)) +  # Adjusted y-axis limit
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 #Use gridarrange
-grid.arrange(p1, p2, p3, p4, p5, ncol = 2)
+
+g1 <- grid.arrange(p1, p2, p3, p4, p5, ncol = 2)
+ggsave(file="dgm1.png", g1)
