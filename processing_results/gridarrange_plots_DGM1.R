@@ -48,7 +48,7 @@ p2 <- ggplot(summary_df, aes(x = Method, y = Mean_SE)) +
     geom_bar(stat = "identity", fill = "salmon") +
     theme_minimal() +
     labs(y = "Mean SE", x = "") +
-    scale_y_continuous(limits = c(0, 0.03)) +  # Adjusted y-axis limit
+    scale_y_continuous(limits = c(0, 0.03)) +  
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 p3 <- ggplot(summary_df, aes(x = Method, y = Empirical_Coverage)) +
@@ -58,17 +58,17 @@ p3 <- ggplot(summary_df, aes(x = Method, y = Empirical_Coverage)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 p4 <- ggplot(summary_df, aes(x = Method, y = Type_I_Error_Null)) +
-    geom_bar(stat = "identity", fill = "lightcoral") +
+    geom_bar(stat = "identity", fill = "navyblue") +
     theme_minimal() +
-    labs(y = "Type I Error Rate", x = "") +
-    scale_y_continuous(limits = c(0, 0.4)) +  # Adjusted y-axis limit
+    labs(y = "T1E Rate", x = "") +
+    scale_y_continuous(limits = c(0, 0.4)) +  
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 p5 <- ggplot(summary_df, aes(x = Method, y = Power_to_Detect_NonNull)) +
     geom_bar(stat = "identity", fill = "lightblue") +
     theme_minimal() +
     labs(y = "Power", x = "") +
-    scale_y_continuous(limits = c(0, 1.0)) +  # Adjusted y-axis limit
+    scale_y_continuous(limits = c(0, 1.0)) +  
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 #Use gridarrange
