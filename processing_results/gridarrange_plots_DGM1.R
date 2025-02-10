@@ -1,77 +1,82 @@
 library(tidyverse)
 library(gridExtra)
 
-#Processing the output for DGM1
-
-summary_df <- tibble(
-    Method = c("Unadjusted", "Dudbridge", "Weighted Median", "MR-Raps", "MR-Horse", "SlopeHunter"),
-    Mean_Bias = c(mean(true_mat - progression_mat), mean(true_mat - dudbridge_mat),
-                  mean(true_mat - median_mat), mean(true_mat - mr_raps_mat),
-                  mean(true_mat - mr_horse_mat), mean(true_mat - slopehunter_mat)),
-    Mean_SE = c(mean(progression_se_mat), mean(dudbridge_se_mat), mean(median_se_mat),
-                mean(mr_raps_se_mat), mean(mr_horse_se_mat), mean(slopehunter_se_mat)),
-    Empirical_Coverage = c(
-        emp.coverage(progression_mat, progression_se_mat, true_mat),
-        emp.coverage(dudbridge_mat, dudbridge_se_mat, true_mat),
-        emp.coverage(median_mat, median_se_mat, true_mat),
-        emp.coverage(mr_raps_mat, mr_raps_se_mat, true_mat),
-        emp.coverage(mr_horse_mat, mr_horse_se_mat, true_mat),
-        emp.coverage(slopehunter_mat, slopehunter_se_mat, true_mat)
-    ),
-    Type_I_Error_Null = c(
-        1 - emp.coverage(progression_mat[, 1:80], progression_se_mat[, 1:80], 0),
-        1 - emp.coverage(dudbridge_mat[, 1:80], dudbridge_se_mat[, 1:80], 0),
-        1 - emp.coverage(median_mat[, 1:80], median_se_mat[, 1:80], 0),
-        1 - emp.coverage(mr_raps_mat[, 1:80], mr_raps_se_mat[, 1:80], 0),
-        1 - emp.coverage(mr_horse_mat[, 1:80], mr_horse_se_mat[, 1:80], 0),
-        1 - emp.coverage(slopehunter_mat[, 1:80], slopehunter_se_mat[, 1:80], 0)
-    ),
-    Power_to_Detect_NonNull = c(
-        1 - emp.coverage(progression_mat[, 81:100], progression_se_mat[, 81:100], 0),
-        1 - emp.coverage(dudbridge_mat[, 81:100], dudbridge_se_mat[, 81:100], 0),
-        1 - emp.coverage(median_mat[, 81:100], median_se_mat[, 81:100], 0),
-        1 - emp.coverage(mr_raps_mat[, 81:100], mr_raps_se_mat[, 81:100], 0),
-        1 - emp.coverage(mr_horse_mat[, 81:100], mr_horse_se_mat[, 81:100], 0),
-        1 - emp.coverage(slopehunter_mat[, 81:100], slopehunter_se_mat[, 81:100], 0)
-    )
-)
-
 #Plots for DGM 1 with adjusted y-axis limits
 
-p1 <- ggplot(summary_df, aes(x = Method, y = Mean_Bias)) +
-    geom_bar(stat = "identity", fill = "skyblue") +
+plot_mean_bias <- ggplot(summary_df, aes(x = Scenario, y = Mean_Bias, group = Method, color = Method, linetype = Method)) +
+    geom_line(size = 1) + 
+    geom_point(size = 3) + 
+    labs(
+        x = "Scenario",
+        y = "Mean Bias") +
+    scale_y_continuous(limits = c(-0.04, 0.01)) +
     theme_minimal() +
-    labs(y = "Mean Bias", x = "") +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_x_discrete(drop = FALSE)
 
-p2 <- ggplot(summary_df, aes(x = Method, y = Mean_SE)) +
-    geom_bar(stat = "identity", fill = "salmon") +
+plot_mean_se <- ggplot(summary_df, aes(x = Scenario, y = Mean_SE, group = Method, color = Method, linetype = Method)) +
+    geom_line(size = 1) + 
+    geom_point(size = 3) + 
+    labs(
+        x = "Scenario",
+        y = "Mean SE") +
+    scale_y_continuous(limits = c(0, 0.1)) +
     theme_minimal() +
-    labs(y = "Mean SE", x = "") +
-    scale_y_continuous(limits = c(0, 0.03)) +  
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_x_discrete(drop = FALSE)
 
-p3 <- ggplot(summary_df, aes(x = Method, y = Empirical_Coverage)) +
-    geom_bar(stat = "identity", fill = "lightgreen") +
+plot_empirical_coverage <- ggplot(summary_df, aes(x = Scenario, y = Empirical_Coverage, group = Method, color = Method, linetype = Method)) +
+    geom_line(size = 1) + 
+    geom_point(size = 3) + 
+    labs(
+        x = "Scenario",
+        y = "Empirical Coverage") +
     theme_minimal() +
-    labs(y = "Coverage", x = "") +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_x_discrete(drop = FALSE)
 
-p4 <- ggplot(summary_df, aes(x = Method, y = Type_I_Error_Null)) +
-    geom_bar(stat = "identity", fill = "navyblue") +
+plot_type_i_error_null <- ggplot(summary_df, aes(x = Scenario, y = Type_I_Error_Null, group = Method, color = Method, linetype = Method)) +
+    geom_line(size = 1) + 
+    geom_point(size = 3) + 
+    labs(
+        x = "Scenario",
+        y = "T1E Rate") +
     theme_minimal() +
-    labs(y = "T1E Rate", x = "") +
-    scale_y_continuous(limits = c(0, 0.4)) +  
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    scale_y_continuous(limits = c(0, 0.6)) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_x_discrete(drop = FALSE)
 
-p5 <- ggplot(summary_df, aes(x = Method, y = Power_to_Detect_NonNull)) +
-    geom_bar(stat = "identity", fill = "lightblue") +
+plot_power_to_detect_nonnull <- ggplot(summary_df, aes(x = Scenario, y = Power_to_Detect_NonNull, group = Method, color = Method, linetype = Method)) +
+    geom_line(size = 1) + 
+    geom_point(size = 3) + 
+    labs(
+        x = "Scenario",
+        y = "Power") +
     theme_minimal() +
-    labs(y = "Power", x = "") +
-    scale_y_continuous(limits = c(0, 1.0)) +  
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    scale_y_continuous(limits = c(0.5, 1.0)) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_x_discrete(drop = FALSE)
 
-#Use gridarrange
+#Combine plots into one
+combined_plot <- grid.arrange(
+    plot_mean_bias + theme(legend.position = "none"), 
+    plot_mean_se + theme(legend.position = "none"),
+    plot_empirical_coverage + theme(legend.position = "none"),
+    plot_type_i_error_null + theme(legend.position = "none"),
+    plot_power_to_detect_nonnull + theme(legend.position = "none"),
+    ncol = 2,
+    top = ""  #This needs to be included and blank or gives an error.
+)
 
-g1 <- grid.arrange(p1, p2, p3, p4, p5, ncol = 2)
-ggsave(file="dgm1.png", g1)
+#Add shared legend
+legend <- get_legend(plot_mean_bias)  #Extract legend from any plot
+
+#Combine plots and legend
+plot <- grid.arrange(
+    combined_plot,
+    legend,
+    ncol = 2,
+    widths = c(4, 1)  #Adjust widths to add legend at the side
+)
+
+ggsave(plot, filename = "DGM1.png")
