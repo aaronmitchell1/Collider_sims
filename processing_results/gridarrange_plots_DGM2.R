@@ -22,7 +22,7 @@ legend.position = "bottom")
 
 p3 <- ggplot(summary_df, aes(x = Scenario, y = Type_I_Error_Null, color = Method, group = Method)) +
 geom_line(size = 1) + geom_point(size = 3) + theme_minimal() +
-labs(x = "Scenario", y = "Type I Error") +
+labs(x = "Scenario", y = "T1E Rate") +
 scale_y_continuous(limits = c(0, 0.4)) +  
 theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "bottom")
 
