@@ -34,7 +34,7 @@ plot_dudbridge <- ggplot(merged_dudbridge, aes(x = True_Beta, y = Dudbridge_Beta
     geom_point(alpha = 0.5) + 
     geom_abline(slope = 1, intercept = 0, color = "red") +
     theme_minimal() +
-    labs(x = "True beta", y = "Dudbridge beta")
+    labs(x = "True beta", y = "CWLS beta")
 
 plot_horse <- ggplot(merged_horse, aes(x = True_Beta, y = Horse_Beta)) +
     geom_point(alpha = 0.5) + 
